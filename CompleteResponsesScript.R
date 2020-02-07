@@ -15,6 +15,7 @@ library(ggplot2)
 #loading the lattice library
 library(lattice)
 
+
 # Read the complete response csv file
 Complete_Responses_DS <- read.csv("CompleteResponses.csv", header = TRUE,sep = ',')
 
@@ -40,7 +41,7 @@ Complete_Responses_DS$zipcode_character <- as.character(Complete_Responses_DS$zi
 class(car_character)
 
 # “brand” -> Logical datatype
-Complete_Responses_DS$brand_logical <- as.logical(Complete_Responses_DS$brand)
+Complete_Responses_DS$brand_logical <- as.factor(Complete_Responses_DS$brand)
 class(brand_logical)
 
 #Summary of the all the data types available in Complete Responses
@@ -120,7 +121,7 @@ ggplot(data = Complete_Responses_DS ,mapping = aes(x = brand_logical, y = age) )
   geom_jitter( color = "blue")
 
 ggplot(data = Complete_Responses_DS ,mapping = aes(x = level , y = brand_logical) ) +
-  geom_jitter( color = "green")
+  geom_jitter( color = "blue")
 
 ggplot(data = Complete_Responses_DS ,mapping = aes(x = car_character, y = brand_logical) ) +
   geom_jitter( color = "brown")
@@ -183,87 +184,105 @@ ggplot(data = Complete_Responses_DS ,mapping = aes(x = salary, y = age, color = 
 #   scale_size(range (0, 10))
 
 # -----------------------------------------------------------------------------------------------------------------------------
-#Random Forrest Automatic Grid and TuneLength = 1 and 2
+# C5.0 Model with 10-fold cross validation
 #create 10000 observation to  be sampled in dataset. Training Set = 75 % and Testing Set = 25 %
+#Calling the CARET library
+library(C50)
 
 # Setting for an random number
 set.seed(998)
 
-#Automation Gird
+#Manual Gird
 # define an 75%/25% train/test split of the dataset
+CR_Partition_C5_M <- createDataPartition(Complete_Responses_DS$brand_logical, p=.75, list = FALSE)
 
-Complete_Responses_Partition <- createDataPartition(Complete_Responses_DS$brand_logical, p=.75, list = FALSE)
+#Checking the datatype of Dataset
+str(CR_Partition_C5_M)
 
-str(Complete_Responses_Partition)
+#Creating the training model
+CR_Training_C5_Manual <- Complete_Responses_DS[CR_Partition_C5_M,]
 
-CR_Training <- Complete_Responses_DS[Complete_Responses_Partition,]
+#Creating a testing model
+CR_Testing_C5_Manual <- Complete_Responses_DS[- CR_Partition_C5_M,]
 
-CR_Testing <- Complete_Responses_DS[- Complete_Responses_Partition,]
+#Checking the number of rows in Training model
+nrow(CR_Training_C5_Manual)
 
-nrow(CR_Training)
-
-nrow(CR_testing)
+#Checking the number of rows in Testing model 
+nrow(CR_Testing_C5_Manual)
 
 #10 fold cross validation
-fitControl <- trainControl(method = "repeatedcv", number = 10, repeats = 1)
+c5_fitControl <- trainControl(method = "repeatedcv", number = 10, repeats = 1)
 
-#train Random Forest Regression model with a tuneLenght = 2 (trains with 2 mtry value for RandomForest)
-rfFit1 <- train(brand_logical~., data = CR_Training, method = "rf", trControl=fitControl, tuneLength = 2)
+#train Linear Regression model
+# C5Fit1 <- train(brand_logical~., data = CR_Training_C5_Manual, method = "C5.0", trControl=c5_fitControl)
+C5Fit1 <- train(brand_logical~age+salary, data = CR_Training_C5_Manual, method = "C5.0", trControl=c5_fitControl)
 
-#train Random Forest Regression model with a tuneLenght = 1 (trains with 1 mtry value for RandomForest)
-rfFit1 <- train(brand_logical~., data = CR_Training, method = "rf", trControl=fitControl, tuneLength = 1)
+#check the results
+C5Fit1
 
-#training results
-rfFit1
+#Checking the plot of C5.0 result
+plot(C5Fit1)
 
-plot(rfFit1)
+# Calculating Of Variable Importance and using ggplot for the VARIMP
+gbmImp2 <- varImp(C5Fit1, scale = FALSE)
+gbmImp2
+
+plot(gbmImp2)
+ggplot(gbmImp2) + theme(legend.position = "top")
+
+# Predicting the training model for C5.0 10-fold cross validation 
+
+# Use method = "none" for no advanced fitting
+C5_10_ctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 1)
+
+#Training the model
+# mod <- train(form = brand_logical ~ .,  
+#              data = CR_Training_C5_Manual,
+#              method = "C5.0",
+#              trControl = ctC5_10_ctrl,
+#              tuneGrid = expand.grid(mtry = 2))
+
+mod <- train(brand_logical ~ .,  
+             data = CR_Training_C5_Manual,
+             method = "C5.0",
+             trControl = C5_10_ctrl)
+
+#check results of model
+C5_10_ctrl
+
+#Prediction
+C5_10_rpart_pred <- predict(object = C5Fit1, 
+                      newdata = CR_Testing_C5_Manual)
+
+#checking for the header in the testing dataset
+head(CR_Testing_C5_Manual)
+
+# Evaluate prediction accuracy
+postResample(pred = C5_10_rpart_pred, 
+             obs = CR_Testing_C5_Manual$brand_logical)
+
+# Import the SurveyIncomplete data
+SurveyIncomplete_DS <- read.csv("SurveyIncomplete.csv", header = TRUE,sep = ',')
+
+SurveyIncomplete_DS$brand_logical <- as.factor(SurveyIncomplete_DS$brand)
+class(brand_logical)
+
+C5_10_rpart_pred <- predict(object = C5Fit1, 
+                            newdata = SurveyIncomplete_DS)
+
+SurveyIncomplete_DS$brand <- C5_10_rpart_pred
+
+postResample(pred = C5_10_rpart_pred, 
+             obs = SurveyIncomplete_DS$brand)
+
+
+
+
+
 
 # -----------------------------------------------------------------------------------------------------------------------------
-
-# Random Forrest - Manual Grid
-#create 10000 observation to  be sampled in dataset. Training Set = 75 % and Testing Set = 25 %
-
-# Setting for an random number
-set.seed(998)
-
-#Automation Gird
-# define an 75%/25% train/test split of the dataset
-
-Complete_Responses_Partition_Manual <- createDataPartition(Complete_Responses_DS$brand_logical, p=.75, list = FALSE)
-
-str(Complete_Responses_Partition_Manual)
-
-CR_Training_Manual <- Complete_Responses_DS[Complete_Responses_Partition_Manual,]
-
-CR_Testing_Manual <- Complete_Responses_DS[- Complete_Responses_Partition_Manual,]
-
-nrow(CR_Training_Manual)
-
-nrow(CR_Testing_Manual)
-
-#10 fold cross validation
-fitControl_M <- trainControl(method = "repeatedcv", number = 10, repeats = 1)
-
-#dataframe for manual tuning of mtry
-rfGrid <- expand.grid(mtry=c(1,2,3))
-
-
-#train Random Forest Regression model
-#note the system time wrapper. system.time()
-#this is used to measure process execution time 
-system.time(rfFitm1 <- train(brand_logical~., data = CR_Training_Manual, method = "rf", trControl=fitControl_M, tuneGrid=rfGrid))
-
-#train Random Forest Regression model with a tuneLenght = 2 (trains with 2 mtry value for RandomForest)
-rfGrid <- train(brand_logical~., data = CR_Training_Manual, method = "rf", trControl=fitControl_M, tuneLength = 1)
-
-#training results
-rfFitm1
-
-
-
-# -----------------------------------------------------------------------------------------------------------------------------
-
-# C5.0 Model - Automotive Grid
+# C5.0 Model Automatic Tuning Grid with tuneLength of 2
 #create 10000 observation to  be sampled in dataset. Training Set = 75 % and Testing Set = 25 %
 #Calling the CARET library
 library(C50)
@@ -299,43 +318,159 @@ C5Fit1
 
 plot(C5Fit1)
 
+gbmImp2 <- varImp(C5Fit1, scale = FALSE)
+gbmImp2
+
+plot(gbmImp2)
 # -----------------------------------------------------------------------------------------------------------------------------
-# C5.0 Model - Manual Grid
+#Random Forrest 10-folds cross validation 
 #create 10000 observation to  be sampled in dataset. Training Set = 75 % and Testing Set = 25 %
-#Calling the CARET library
-library(C50)
+
 # Setting for an random number
 set.seed(998)
 
 #Automation Gird
 # define an 75%/25% train/test split of the dataset
+Complete_Responses_Partition <- createDataPartition(Complete_Responses_DS$brand_logical, p=.75, list = FALSE)
 
-CR_Partition_C5_Manual <- createDataPartition(Complete_Responses_DS$brand_logical, p=.75, list = FALSE)
+#Checking the datatype of Dataset
+str(Complete_Responses_Partition)
 
-str(CR_Partition_C5_Manual)
+#Creating the training model
+CR_Training <- Complete_Responses_DS[Complete_Responses_Partition,]
 
-CR_Training_C5_Manual <- Complete_Responses_DS[CR_Partition_C5_Manual,]
+#Creating a testing model
+CR_Testing <- Complete_Responses_DS[- Complete_Responses_Partition,]
 
-CR_Testing_C5_Manual <- Complete_Responses_DS[- CR_Partition_C5_Manual,]
+#Checking the number of rows in Training model 
+nrow(CR_Training)
 
-nrow(CR_Training_C5_Manual)
-
-nrow(CR_Testing_C5_Manual)
+#Checking the number of rows in Testing model 
+nrow(CR_Testing)
 
 #10 fold cross validation
-C5fitControl_Manual <- trainControl(method = "repeatedcv", number = 10, repeats = 1)
+fitControl <- trainControl(method = "repeatedcv", number = 10, repeats = 1)
 
+#train Random Forest Regression model with a tuneLenght = 2 (trains with 2 mtry value for RandomForest)
+rfFit1 <- train(brand_logical~., data = CR_Training, method = "rf", trControl=fitControl, tuneLength = 2)
+
+#train Random Forest Regression model with a tuneLenght = 1 (trains with 1 mtry value for RandomForest)
+# rfFit1 <- train(brand_logical~., data = CR_Training, method = "rf", trControl=fitControl, tuneLength = 1)
+
+#training results
+rfFit1
+
+plot(rfFit1)
+
+varimp(rfFit1)
+
+gbmImp <- varImp(rfFit1, scale = FALSE)
+gbmImp
+
+plot(gbmImp)
+
+
+# Predicting the training model for C5.0 10-fold cross validation 
+
+# Use method = "none" for no advanced fitting
+RF_10_ctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 1)
+
+#Training the model
+# mod <- train(form = brand_logical ~ .,  
+#              data = CR_Training_C5_Manual,
+#              method = "C5.0",
+#              trControl = ctC5_10_ctrl,
+#              tuneGrid = expand.grid(mtry = 2))
+
+mod <- train(brand_logical ~ .,  
+             data = CR_Training,
+             method = "rf",
+             trControl = RF_10_ctrl)
+
+#check results of model
+C5_10_ctrl
+
+# # Printing the object for the model
+# mod            # Print object
+# mod$finalModel # Final model
+
+#Prediction
+RF_10_rpart_pred <- predict(object = rfFit1, 
+                            newdata = CR_Testing)
+
+head(CR_Testing)
+
+# Evaluate prediction accuracy
+postResample(pred = RF_10_rpart_pred, 
+             obs = CR_Testing$brand_logical)
+
+
+
+# -----------------------------------------------------------------------------------------------------------------------------
+
+# Random Forrest manually tune 5 different mtry values
+#create 10000 observation to  be sampled in dataset. Training Set = 75 % and Testing Set = 25 %
+
+# Setting for an random number
+set.seed(998)
+
+#Manual Gird
+# define an 75%/25% train/test split of the dataset
+Complete_Responses_Partition_Manual <- createDataPartition(Complete_Responses_DS$brand_logical, p=.75, list = FALSE)
+
+#Checking the datatype of Dataset
+str(Complete_Responses_Partition_Manual)
+
+#Creating the training model
+CR_Training_Manual <- Complete_Responses_DS[Complete_Responses_Partition_Manual,]
+
+#Creating the testing model
+CR_Testing_Manual <- Complete_Responses_DS[- Complete_Responses_Partition_Manual,]
+
+#Checking the number of rows in Training model 
+nrow(CR_Training_Manual)
+
+#Checking the number of rows in Testing model 
+nrow(CR_Testing_Manual)
+
+#10 fold cross validation
+fitControl_M <- trainControl(method = "repeatedcv", number = 10, repeats = 1)
 
 #dataframe for manual tuning of mtry
-C5_Grid_M <- expand.grid(mtry=c(30:40))
+rfGrid <- expand.grid(mtry=c(1,2,3,4,5))
+
 
 #train Random Forest Regression model
 #note the system time wrapper. system.time()
 #this is used to measure process execution time 
-system.time(rfFitm1 <- train(brand_logical~., data = CR_Training_C5_Manual, method = "rf", trControl=fitControl_M, tuneGrid=C5_Grid_M))
+system.time(rfFitm1 <- train(brand_logical~., data = CR_Training_Manual, method = "rf", trControl=fitControl_M, tuneGrid=rfGrid))
 
 #train Random Forest Regression model with a tuneLenght = 2 (trains with 2 mtry value for RandomForest)
 rfGrid <- train(brand_logical~., data = CR_Training_Manual, method = "rf", trControl=fitControl_M, tuneLength = 1)
 
 #training results
 rfFitm1
+
+gbmImp1 <- varImp(rfFitm1, scale = FALSE)
+gbmImp1
+
+plot(gbmImp1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
