@@ -277,10 +277,6 @@ postResample(pred = C5_10_rpart_pred,
              obs = SurveyIncomplete_DS$brand)
 
 
-
-
-
-
 # -----------------------------------------------------------------------------------------------------------------------------
 # C5.0 Model Automatic Tuning Grid with tuneLength of 2
 #create 10000 observation to  be sampled in dataset. Training Set = 75 % and Testing Set = 25 %
