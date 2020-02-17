@@ -55,25 +55,31 @@ head(filter_5)
 
 # 7_Add new variables into your data
 # Apply the filters you did before and create a new column with their 'brain-to-body mass ratio' (**brainwt** / **bodywt**)
-filter_6 <- mutate(msleep, 
-                   braintobody = msleep$brainwt/ msleep$bodywt)
-
-summary(filter_6)
-
 # Summarize the information with the mean of brain-to-body variable for each level of the **vore** variable.
-voremean <- mean(c(filter_6$braintobody, filter_6$vore))
-summary(voremean)
-
 # Add a column with the counter for observations for each row with `n()`
-n()
-
 # 8_Order the information in descending order
-arrange()
+
+filter_7 <- msleep %>%
+  mutate(braintobody = brainwt / bodywt) %>%
+  mutate(counter = n()) #%>%
+  # select(brainwt, bodywt, braintobody) %>%
+  arrange(desc(braintobody)) %>%
+  # filter(brainwt > 2)
+
+filter_7
+nrow(filter_7)
+ncol(filter_7)
+
+glimpse(filter_7)
+
+# summary(filter_6)
+# voremean <- mean(c(filter_6$braintobody, filter_6$vore))
+# summary(voremean)
+# arrange()
+# # filter_6 <- mutate(msleep,
+# # braintobody = msleep$brainwt/ msleep$bodywt)
 
 
-
-
-      
 
 
 
