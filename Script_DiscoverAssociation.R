@@ -56,26 +56,27 @@ elec.Transaction.Apriori.1 <- apriori (elec.Transactions,
 elec.Transaction.Apriori.2 <- apriori (elec.Transactions, 
                                      parameter = list(supp = 0.01, conf = 0.3))
 
-elec.Transaction.Apriori.3 <- apriori (elec.Transactions, 
-                                     parameter = list(supp = 0.1, conf = 1, maxlength = 1))           
-
+# elec.Transaction.Apriori.3 <- apriori (elec.Transactions, 
+#                                      parameter = list(supp = 0.1, conf = 1, maxlength = 1))           
 
 # Evaluation of the model
-summary(elec.Transaction.Apriori)
+summary(elec.Transaction.Apriori.2)
 
 # Inspect the rule name
-inspect(sort(elec.Transaction.Apriori), by="lift")
+inspect(sort(elec.Transaction.Apriori.2,by="lift"))
+
+plot(elec.Transaction.Apriori.2)
 
 # Improve your model
 # Checking the confidence value with a decreasing values
-inspect.confidence <- inspect(sort(elec.Transaction.Apriori, by = "confidence", decreasing=TRUE))
+inspect.SortedByconfidence <- inspect(sort(elec.Transaction.Apriori.2, by = "confidence", decreasing=TRUE))
 # inspect using support
-inspect.support <- inspect(sort(elec.Transaction.Apriori, by = "support"))
+inspect.support <- inspect(sort(elec.Transaction.Apriori.2, by = "support"))
 # inspect using the lift
-inspect.sort <- inspect(sort(elec.Transaction.Apriori, by = "lift"))
+inspect.sort <- inspect(sort(elec.Transaction.Apriori.2, by = "lift"))
 
 # Checking the summary for all the inspect value
-summary(inspect.confidence)
+summary(inspect.SortedByconfidence)
 
 summary(inspect.support)
 
@@ -93,7 +94,7 @@ itemRules.subset <- subset(elec.Transaction.Apriori.2, items %in% "Acer Aspire",
 summary(itemRules.subset)
 
 # Visualize the results using plot
-plot(itemRules.subset[1:123], method="graph", control=list(type="items")) 
+plot(itemRules.subset, method="graph", control=list(type="items")) 
 # Iteration 2 -----------------------------------------------------------------------------------------------------------------------------
 
 library(arulesViz)
@@ -101,15 +102,15 @@ library(arulesViz)
 # elec.Trans.Apriori.4 <- apriori (elec.Transactions, 
                                        # parameter = list(supp = 0.01, conf = 0.3), appearance = list(default="rhs", default ="iPad"))
 
-elec.Trans.Apriori.4 <- apriori (elec.Transactions, parameter = list(supp = 0.01, conf = 0.03))
+# elec.Trans.Apriori.4 <- apriori (elec.Transactions, parameter = list(supp = 0.01, conf = 0.03))
                                  
                                  
-inspect(elec.Trans.Apriori.4[1:153])
+inspect(elec.Transaction.Apriori.2)
 
-summary()
+summary(elec.Transaction.Apriori.2)
 
-ruleExplorer(elec.Trans.Apriori.4)
-
+ruleExplorer(elec.Transaction.Apriori.2)
+-----------------------------------------------------------------------------------------------------------------------
 # Iteration 3 -----------------------------------------------------------------------------------------------------------------------------
 # Visualize the support and confidence (Lower than the Iteration 2)
 library(arulesViz)
@@ -130,13 +131,15 @@ plot(elec.Trans.Apriori.5, method = "grouped")
 summary()
 
 ruleExplorer(elec.Trans.Apriori.5)
-
+-----------------------------------------------------------------------------------------------------------------------
 # Iteration 4 -Keeping the values of the Support, Confidence and the life values as highest--------------------------------------
 # Highest values are based on the previous analysis (Iteration 3)
 
 library(arulesViz)
 
-elec.Trans.Apriori.6 <- apriori (elec.Transactions, parameter = list(supp = 0.076, conf = 0.602, lift = 3.360))
+# elec.Trans.Apriori.6 <- apriori (elec.Transactions, parameter = list(supp = 0.076, conf = 0.602, lift = 3.360))
+
+elec.Trans.Apriori.6 <- apriori (elec.Transactions, parameter = list(supp = 0.076, conf = 0.602))
 
 inspect(elec.Trans.Apriori.5[1:100])
 
@@ -149,13 +152,15 @@ plot(elec.Trans.Apriori.6, method = "grouped")
 summary()
 
 ruleExplorer(elec.Trans.Apriori.5)
-
+-----------------------------------------------------------------------------------------------------------------------
 # Iteration 5 -- Keeping the values of the Support, Confidence and the life values as lowest--------------------------------------
 # Lowest values are based on the previous analysis (Iteration 3)
 
 library(arulesViz)
 
-elec.Trans.Apriori.6 <- apriori (elec.Transactions, parameter = list(supp = 0.010, conf = 0.039, lift = 0.693))
+# elec.Trans.Apriori.6 <- apriori (elec.Transactions, parameter = list(supp = 0.010, conf = 0.039, lift = 0.693))
+
+elec.Trans.Apriori.6 <- apriori (elec.Transactions, parameter = list(supp = 0.010, conf = 0.039))
 
 inspect(elec.Trans.Apriori.5[1:100])
 
