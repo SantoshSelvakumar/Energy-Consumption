@@ -1,130 +1,144 @@
-## Combine Date and Time attribute values in a new attribute column
-# DataSet: yr_2006 ---------------------------------------------------------------------------------------------
-yourdataframe <-cbind(yourdataframe,paste(yourdataframe$Date,yourdataframe$Time), stringsAsFactors=FALSE)
+# Libraries
+library(RMySQL)
+library(dplyr)
+library(DBI)
+library(dbplyr)
+library(ggplot2)
+library(modelDB)
+library(tidypredict)
+library(caret)
+library(lattice)
+library(ggplot2)
 
-yr_2006_df <- cbind(yr_2006, paste(yr_2006$Date,yr_2006$Time), stringsasFactors=FALSE)
-yr_2006_df
-head(yr_2006_df)
+# DataSet: combination of all the year Dataset ---------------------------------------------------------------------------------------------
+# yourdataframe <-cbind(yourdataframe,paste(yourdataframe$Date,yourdataframe$Time), stringsAsFactors=FALSE)
 
-## Give the new attribute in the 6th column a header name 
-## NOTE: if you downloaded more than 5 attributes you will need to change the column number)
-colnames(yr_2006_df)[11] <-"DateTime"
-
-## Move the DateTime attribute within the dataset
-yr_2006_df <- yr_2006_df[,c(ncol(yr_2006_df), 1:(ncol(yr_2006_df)-1))]
-head(yr_2006_df)
-
-## Convert DateTime from POSIXlt to POSIXct 
-yr_2006_df$DateTime <- as.POSIXct(yr_2006_df$DateTime, "%Y/%m/%d %H:%M:%S")
-
-## Add the time zone
-attr(yr_2006_df$DateTime, "tzone") <- "Europe/Paris"
-
-## Inspect the data types
-str(yr_2006_df)
-
-## Combine Date and Time attribute values in a new attribute column
-# DataSet: yr_2007 ---------------------------------------------------------------------------------------------
-yr_2007_df <- cbind(yr_2007, paste(yr_2007$Date,yr_2007$Time), stringsasFactors=FALSE)
-yr_2007_df
-head(yr_2007_df)
+combinedDF_All <- cbind(combinedDF, paste(combinedDF$Date,combinedDF$Time), stringsasFactors=FALSE)
+combinedDF_All
+head(combinedDF_All)
 
 ## Give the new attribute in the 6th column a header name 
 ## NOTE: if you downloaded more than 5 attributes you will need to change the column number)
-colnames(yr_2007_df)[11] <-"DateTime"
+colnames(combinedDF_All)[11] <-"DateTime"
 
 ## Move the DateTime attribute within the dataset
-yr_2007_df <- yr_2007_df[,c(ncol(yr_2007_df), 1:(ncol(yr_2007_df)-1))]
-head(yr_2007_df)
+combinedDF_All <- combinedDF_All[,c(ncol(combinedDF_All), 1:(ncol(combinedDF_All)-1))]
+head(combinedDF_All)
 
 ## Convert DateTime from POSIXlt to POSIXct 
-yr_2007_df$DateTime <- as.POSIXct(yr_2007_df$DateTime, "%Y/%m/%d %H:%M:%S")
+combinedDF_All$DateTime <- as.POSIXct(combinedDF_All$DateTime, "%Y/%m/%d %H:%M:%S")
 
-## Add the time zone
-attr(yr_2007_df$DateTime, "tzone") <- "Europe/Paris"
-
-## Inspect the data types
-str(yr_2007_df)
-
-## Combine Date and Time attribute values in a new attribute column
-# DataSet: yr_2008 ---------------------------------------------------------------------------------------------
-yr_2008_df <- cbind(yr_2008, paste(yr_2008$Date,yr_2008$Time), stringsasFactors=FALSE)
-yr_2008_df
-head(yr_2008_df)
-
-## Give the new attribute in the 6th column a header name 
-## NOTE: if you downloaded more than 5 attributes you will need to change the column number)
-colnames(yr_2008_df)[11] <-"DateTime"
-
-## Move the DateTime attribute within the dataset
-yr_2008_df <- yr_2008_df[,c(ncol(yr_2008_df), 1:(ncol(yr_2008_df)-1))]
-head(yr_2008_df)
-
-## Convert DateTime from POSIXlt to POSIXct 
-yr_2008_df$DateTime <- as.POSIXct(yr_2008_df$DateTime, "%Y/%m/%d %H:%M:%S")
-
-## Add the time zone
-attr(yr_2008_df$DateTime, "tzone") <- "Europe/Paris"
+## Add the time zone- CET
+attr(combinedDF_All$DateTime, "tzone") <- "Europe/Paris"
 
 ## Inspect the data types
-str(yr_2008_df)
+str(combinedDF_All)
 
-## Combine Date and Time attribute values in a new attribute column
-# DataSet: yr_2009 ---------------------------------------------------------------------------------------------
-yr_2009_df <- cbind(yr_2009, paste(yr_2009$Date,yr_2009$Time), stringsasFactors=FALSE)
-yr_2009_df
-head(yr_2009_df)
+# Remove the "stringsasFactors" column in DS
+combinedDF_All[1] <- NULL
+head(combinedDF_All)
+glimpse(combinedDF_All)
 
-## Give the new attribute in the 6th column a header name 
-## NOTE: if you downloaded more than 5 attributes you will need to change the column number)
-colnames(yr_2009_df)[11] <-"DateTime"
+# Exclude rows with NA values in data set: combinedDF_All
+combinedDF_All[complete.cases(combinedDF_All),]
 
-## Move the DateTime attribute within the dataset
-yr_2009_df <- yr_2009_df[,c(ncol(yr_2009_df), 1:(ncol(yr_2009_df)-1))]
-head(yr_2009_df)
+# Renaming the heading as Kitchen = Sub_metering_1,Laundry_room = Sub_metering_2, Water_heater_AC = Sub_metering_3
+combinedDF_RN <- rename(combinedDF_All, Kitchen = Sub_metering_1,
+                  Laundry_room = Sub_metering_2, Water_heater_AC = Sub_metering_3)
+head(combinedDF_RN)
 
-## Convert DateTime from POSIXlt to POSIXct 
-yr_2009_df$DateTime <- as.POSIXct(yr_2009_df$DateTime, "%Y/%m/%d %H:%M:%S")
+library(ggplot2)
 
-## Add the time zone
-attr(yr_2009_df$DateTime, "tzone") <- "Europe/Paris"
+# Plotting for Global_active_power
+hist(combinedDF_RN$Global_active_power, col = "red",
+     xlab = "Global Active Power (kilowatts)", main = "Global Active Power")
 
-## Inspect the data types
-str(yr_2009_df)
+GAP_1 <- (ggplot(combinedDF_RN, aes(x = Global_active_power))
+       + geom_histogram(fill = "#F8766D")
+       + labs(x = "Global Active Power (kilowatts)", title = "Global Active Power"))
+GAP_1
 
-## Combine Date and Time attribute values in a new attribute column
-# DataSet: yr_2010 ---------------------------------------------------------------------------------------------
-yr_2010_df <- cbind(yr_2010, paste(yr_2010$Date,yr_2010$Time), stringsasFactors=FALSE)
-yr_2010_df
-head(yr_2010_df)
+GAP_2 <- (ggplot(combinedDF_RN, aes(x = DateTime, y = Global_active_power))
+       + geom_line() + xlab("") + ylab("Global Active Power (kilowatts)"))
+GAP_2
 
-## Give the new attribute in the 6th column a header name 
-## NOTE: if you downloaded more than 5 attributes you will need to change the column number)
-colnames(yr_2010_df)[11] <-"DateTime"
+# Plotting for Global_intensity
+GI_1 <- (ggplot(combinedDF_RN, aes(x = Global_intensity))
+          + geom_histogram(fill = "#F8766D")
+          + labs(x = "Global Intensity (kilowatts)", title = "Global Intensity"))
+GAP_1
 
-## Move the DateTime attribute within the dataset
-yr_2010_df <- yr_2010_df[,c(ncol(yr_2010_df), 1:(ncol(yr_2010_df)-1))]
-head(yr_2010_df)
+GI_2 <- (ggplot(combinedDF_RN, aes(x = DateTime, y = Global_intensity))
+         + geom_line() + xlab("") + ylab("Global Intensity (kilowatts)"))
+GI_2
 
-## Convert DateTime from POSIXlt to POSIXct 
-yr_2010_df$DateTime <- as.POSIXct(yr_2010_df$DateTime, "%Y/%m/%d %H:%M:%S")
+# Plotting for Voltage
+Vol_1 <- (ggplot(combinedDF_RN, aes(x = Voltage))
+         + geom_histogram(fill = "#F8766D")
+         + labs(x = "Voltage (Volts)", title = "Voltage"))
+Vol_1
 
-## Add the time zone
-attr(yr_2010_df$DateTime, "tzone") <- "Europe/Paris"
+Vol_2 <- (ggplot(combinedDF_RN, aes(x = DateTime, y = Voltage))
+         + geom_line() + xlab("") + ylab("Voltage (Volts)"))
+Vol_2
 
-## Inspect the data types
-str(yr_2010_df)
+# Plotting for Voltage
+plot(combinedDF_RN$DateTime, combinedDF_RN$Kitchen, type = "l", ylab = "Energy sub metering", xlab = "")
+points(combinedDF_RN$DateTime, combinedDF_RN$Laundry_room, type = "l", col = "red")
+points(combinedDF_RN$DateTime, combinedDF_RN$Water_heater_AC, type = "l", col = "blue")
+legend("topright", lty = c(1,1,1), lwd = c(2,2,2), col = c("black", "red", "blue"),
+legend = c("Kitchen", "Laundry_room", "Water_heater_AC"))
 
-# Lubridate: yr_2006_df -----------------------------------------------------------------------------------------------------
-# Calling the Lubridate library
-library(lubridate)
-
-## Create "year" attribute with lubridate
-yr_2006_df$Year <- year(yr_2006_df$DateTime)
-
-
+#  Total consumption by Submeters
 
 
+ggplot() +
+  geom_col(data=combinedDF_RN,
+           aes(x=Year, y=Consump, fill=Submeter),
+           position="dodge") +
+  labs(x="Year", y="Consumption Watt/Hour", title="Total Consumption by Sub-meters") +
+  scale_y_continuous(labels=scales::comma) +
+  theme_linedraw(base_size = 11, base_family = "") +
+  theme(plot.title = element_text(hjust = 0.5, face="bold")) 
+
+Consumption <- Consumption %>% 
+  mutate(DateTime = ifelse(between(DateTime, as_datetime("2007-03-25 02:00:00"),
+                                   as_datetime("2007-10-28 01:59:00")),
+                           (DateTime + 3600) , (DateTime))) 
+ggplot() +
+  geom_col(data=anual.week,
+           aes(x=week_days, y=Mean_GC, fill=Month),
+           position= "dodge") +
+  labs(x="Week Days", y="Average Global Consumption", title="Average Consumption by Weekdays ") +
+  theme_linedraw(base_size = 11, base_family = "") +
+  theme(plot.title = element_text(hjust = 0.5, face="bold"))
+
+library(dplyr)
+
+# Total energy consumed by year
+combinedDF_RN %>% 
+  as_tibble() %>% 
+  mutate(year = year(DateTime)) %>% 
+  select(year, DateTime, Global_active_power) %>% 
+  group_by(year) %>% 
+  summarise(total_GAP = sum(Global_active_power)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x=year, y=total_GAP)) +
+  geom_col(fill='dodgerblue4') +
+  theme_bw()
+
+# Find the max value of attribute Kitchen (Kwh)
+# Find the min value of attribute Kitchen (Kwh)
+# Find the max value of attribute Laundry_room (Kwh)
+# Find the min value of attribute Laundry_room (Kwh)
+# Find the max value of attribute Water_heater_AC (Kwh)
+# Find the min value of attribute Water_heater_AC (Kwh)
+# Find the Mean, Mode, SD, quartiles and charactization of distribution
+
+combinedDF_RN %>% 
+  as_tibble()  %>% 
+  lapply(data, class)
+  
 
 
 
